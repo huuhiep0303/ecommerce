@@ -1,0 +1,62 @@
+name: Deploy to AWS
+on:
+  push:
+    branches:
+      - "main"
+env:
+  AWS_REGION: ap-southeast-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  PRIVATE_SSH_KEY: ${{ secrets.AWS_SSH_KEY }}
+  SERVER_PUBLIC_IP: ${{ secrets.AWS_PUBLIC_KEY }}
+  PORT: ${{ vars.PORT }}
+  DATABASE_URL: ${{ vars.DATABASE_URL }}
+jobs:
+  build: 
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials 
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+      - name: Login to AWS ECR 
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build, push docker image
+        env: 
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ecommerce
+          IMAGE_TAG: ${{ github.sha }}
+        run:
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      - name: Deploy docker image to EC2
+        env: 
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ecommerce
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_DEFAULT_REGION: ap-southeast-1
+          PORT: ${{ env.PORT }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_PUBLIC_IP }}
+          username: ec2-user
+          key: ${{ env.{PRIVATE_SSH_KEY}}
+          envs: PRIVATE_SSH_KEY,REGISTRY,REPOSITORY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,AWS_REGION,PORT,DATABASE_URL
+          script: |-
+            # sudo apt update
+            sudo service docker start
+            sudo chmod 666 /var/run/docker.sock
+            aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 905418342382.dkr.ecr.ap-southeast-1.amazonaws.com
+            docker stop $(docker ps -aq)
+            pull $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            docker run -d -p 3000:3000 --env PORT=$PORT --env DATABASE_URL=$DATABASE_URL $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            docker container prune -f
+            docker image prune -a -f
+    
