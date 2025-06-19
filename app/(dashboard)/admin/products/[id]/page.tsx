@@ -261,7 +261,7 @@ const DashboardProductDetails = ({
 
         {/* Main image file upload div - start */}
         <div>
-          <input
+          {/* <input
             type="file"
             className="file-input file-input-bordered file-input-lg w-full max-w-sm"
             onChange={(e) => {
@@ -272,7 +272,21 @@ const DashboardProductDetails = ({
                 setProduct({ ...product!, mainImage: selectedFile.name });
               }
             }}
+          /> */}
+
+          <input
+            type="file"
+            className="file-input file-input-bordered file-input-lg w-full max-w-sm"
+            onChange={(e) => {
+              const files = e.target.files;
+              if (files && files.length > 0) {
+                const selectedFile = files[0];
+                uploadFile(selectedFile);
+                setProduct({ ...product!, mainImage: selectedFile.name });
+              }
+            }}
           />
+
           {product?.mainImage && (
             <Image
               src={`/` + product?.mainImage}
