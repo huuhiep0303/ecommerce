@@ -18,7 +18,7 @@ export default async function Layout({
 
   let email: string = await session?.user?.email;
   
-  const res = await fetch(`http://localhost:3001/api/users/email/${email}`);
+  const res = await fetch(`http://172.17.0.1:3001/api/users/email/${email}`);
   const data = await res.json();
 
   // Chỉ chuyển hướng user về trang chủ, để admin tiếp tục xem trang admin

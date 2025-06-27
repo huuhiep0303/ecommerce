@@ -16,7 +16,7 @@ const LoginPage = () => {
   useEffect(() => {
     if (sessionStatus === "authenticated") {
       // Kiểm tra role và chuyển hướng
-      fetch(`http://localhost:3001/api/users/email/${session?.user?.email}`)
+      fetch(`http://172.17.0.1:3001/api/users/email/${session?.user?.email}`)
         .then(res => res.json())
         .then(data => {
           if (data.role === "admin") {
@@ -58,7 +58,7 @@ const LoginPage = () => {
       setError("");
       toast.success("Successful login");
       // Kiểm tra role và chuyển hướng
-      const userRes = await fetch(`http://localhost:3001/api/users/email/${email}`);
+      const userRes = await fetch(`http://172.17.0.1:3001/api/users/email/${email}`);
       const userData = await userRes.json();
       if (userData.role === "admin") {
         router.replace("/admin");
