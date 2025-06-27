@@ -11,6 +11,7 @@ env:
   SERVER_PUBLIC_IP: ${{ secrets.AWS_PUBLIC_KEY }}
   PORT: ${{ vars.PORT }}
   DATABASE_URL: ${{ vars.DATABASE_URL }}
+  NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
 jobs:
   build: 
     name: Build Image
